@@ -97,9 +97,6 @@ class Polynomial3(torch.nn.Module):
         self.x2 = torch.nn.Parameter(torch.randn(()))
         self.x3 = torch.nn.Parameter(torch.randn(()))
         self.x4 = torch.nn.Parameter(torch.randn(()))
-        self.x5 = torch.nn.Parameter(torch.randn(()))
-        self.x6 = torch.nn.Parameter(torch.randn(()))
-        self.x7 = torch.nn.Parameter(torch.randn(()))
 
     def forward(self, x):
         """
@@ -107,15 +104,7 @@ class Polynomial3(torch.nn.Module):
         a Tensor of output data. We can use Modules defined in the constructor as
         well as arbitrary operators on Tensors.
         """
-        return (
-            self.x1
-            + self.x2 * x
-            + self.x3 * x**2
-            + self.x4 * x**3
-            + self.x5 * torch.exp(x)
-            + self.x6 * torch.sin(x)
-            + self.x7 * torch.tanh(x)
-        )
+        return self.x1 + self.x2 * x + self.x3 * x**2 + self.x4 * x**3
 
 
 class FeedForward(nn.Module):
