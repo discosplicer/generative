@@ -21,6 +21,7 @@ MODEL_PARAMS = {
     "n_embd": 192,
     "num_heads": 6,
     "n_layer": 6,
+    "temperature": 0.8,
     "dropout": 0.1,
     "device": "cuda" if torch.cuda.is_available() else "cpu",
 }

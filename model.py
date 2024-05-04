@@ -208,7 +208,7 @@ class SimpleLinear(nn.Module):
         return logits, loss
 
     @torch.no_grad()
-    def generate(self, idx, max_new_tokens):
+    def generate(self, idx, max_new_tokens, temperature=1.0):
         # idx is (B, T) array of indices in the current context.
         for _ in range(max_new_tokens):
             # if the sequence context is growing too long we must crop it at block_size
@@ -216,7 +216,7 @@ class SimpleLinear(nn.Module):
             # Get the predictions.
             logits, loss = self(idx_cond)
             # Only use the last time step.
-            logits = logits[:, -1, :]  # (B, C)
+            logits = logits[:, -1, :] / temperature  # (B, C)
             # apply softmax to get probabilities
             probs = F.softmax(logits, dim=-1)  # (B, C)
             # sample from the distribution
@@ -241,6 +241,7 @@ class Model:
         self.lr = params["lr"]
         self.eval_iters = params["eval_iters"]
         self.device = params["device"]
+        self.temperature = params["temperature"]
 
     def get_batch(self, split="train"):
         """
@@ -304,7 +305,9 @@ class Model:
 
     def inference(self, max_tokens, iter=None):
         context = torch.zeros((1, 1), dtype=torch.long, device=self.device)
-        next_tokens = self.model.generate(context, max_new_tokens=max_tokens)
+        next_tokens = self.model.generate(
+            context, max_new_tokens=max_tokens, temperature=self.temperature
+        )
         return next_tokens[0]
 
     def context_target_demo(self):
