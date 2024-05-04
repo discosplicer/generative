@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+
+import math
 from torch.nn import functional as F
 import pandas as pd
 import numpy as np
@@ -86,7 +88,7 @@ class MultiHeadAttention(nn.Module):
         return out
 
 
-class Polynomial3(torch.nn.Module):
+class LearnedGeLU(torch.nn.Module):
     def __init__(self):
         """
         In the constructor we instantiate four parameters and assign them as
@@ -104,7 +106,17 @@ class Polynomial3(torch.nn.Module):
         a Tensor of output data. We can use Modules defined in the constructor as
         well as arbitrary operators on Tensors.
         """
-        return self.x1 + self.x2 * x + self.x3 * x**2 + self.x4 * x**3
+        return (
+            self.x1
+            * x
+            * (
+                self.x2
+                + torch.tanh(
+                    math.sqrt(torch.abs(self.x3) / math.pi)
+                    * (x + self.x4 * torch.pow(x, 3.0))
+                )
+            )
+        )
 
 
 class FeedForward(nn.Module):
@@ -115,7 +127,7 @@ class FeedForward(nn.Module):
         # The inner layer of the feed-forward network should be 4x the size of the embeddings, according to AIAYN.
         self.net = nn.Sequential(
             nn.Linear(params["n_embd"], 4 * params["n_embd"]),
-            Polynomial3(),
+            LearnedGeLU(),
             nn.Linear(4 * params["n_embd"], params["n_embd"]),
             nn.Dropout(params["dropout"]),
         )
