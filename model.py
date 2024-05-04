@@ -127,7 +127,6 @@ class FeedForward(nn.Module):
         self.net = nn.Sequential(
             nn.Linear(params["n_embd"], 4 * params["n_embd"]),
             Polynomial3(),
-            nn.Dropout(params["dropout"]),
             nn.Linear(4 * params["n_embd"], params["n_embd"]),
             nn.Dropout(params["dropout"]),
         )

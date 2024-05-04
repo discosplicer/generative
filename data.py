@@ -3,7 +3,7 @@ import torch
 
 class ModelData:
     def __init__(self, file, train_split_pct):
-        with open(file, 'r', encoding='utf-8') as f:
+        with open(file, "r", encoding="utf-8") as f:
             self.text = f.read()
         self.unique_chars()
         self.encoder_decoder()
@@ -20,7 +20,7 @@ class ModelData:
         # encoder takes a string and returns a list of ints
         self.encode = lambda s: [str_to_int[c] for c in s]
         # decoder takes a list of ints and returns a string
-        self.decode = lambda l: ''.join([int_to_str[i] for i in l])
+        self.decode = lambda l: "".join([int_to_str[i] for i in l])
 
     def train_test_split(self, train_split_pct):
         train_n = int(train_split_pct * len(self.data))
@@ -29,7 +29,7 @@ class ModelData:
 
 
 if __name__ == "__main__":
-    x = ModelData('input.txt', 0.9)
+    x = ModelData("nietzsche.txt", 0.9)
     print(x.data.shape)
     print(x.data.dtype)
     print(x.data[:1000])
