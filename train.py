@@ -15,14 +15,14 @@ from model import Model, SimpleLinear, AttentionHead, BigramLanguageModel
 
 MODEL_PARAMS = {
     "batch_size": 32,  # Number of independent sequences.
-    "block_size": 256,  # Max context length.
+    "block_size": 128,  # Max context length.
     "lr": 1e-3,
     "eval_iters": 100,
     "n_embd": 192,
     "num_heads": 6,
     "n_layer": 6,
     "temperature": 0.8,
-    "dropout": 0.1,
+    "dropout": 0.2,
     "device": "cuda" if torch.cuda.is_available() else "cpu",
 }
 model_params = MODEL_PARAMS
