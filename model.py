@@ -97,8 +97,11 @@ class LearnedGeLU(torch.nn.Module):
         super().__init__()
         self.x1 = torch.nn.Parameter(torch.randn(()))
         self.x2 = torch.nn.Parameter(torch.randn(()))
-        self.x3 = torch.nn.Parameter(torch.randn(()))
-        self.x4 = torch.nn.Parameter(torch.randn(()))
+        # self.x3 = torch.nn.Parameter(torch.randn(()))
+        # self.x4 = torch.nn.Parameter(torch.randn(()))
+        # self.x5 = torch.nn.Parameter(torch.randn(()))
+        # self.x6 = torch.nn.Parameter(torch.randn(()))
+        self.x7 = torch.nn.Parameter(torch.randn(()))
 
     def forward(self, x):
         """
@@ -108,14 +111,12 @@ class LearnedGeLU(torch.nn.Module):
         """
         return (
             self.x1
-            * x
-            * (
-                self.x2
-                + torch.tanh(
-                    math.sqrt(torch.abs(self.x3) / math.pi)
-                    * (x + self.x4 * torch.pow(x, 3.0))
-                )
-            )
+            + self.x2 * x
+            # + self.x3 * x**2
+            # + self.x4 * x**3
+            # + self.x5 * torch.exp(x)
+            # + self.x6 * torch.sin(x)
+            + self.x7 * torch.tanh(x)
         )
 
 

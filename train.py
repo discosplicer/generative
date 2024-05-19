@@ -15,7 +15,7 @@ from model import Model, SimpleLinear, AttentionHead, BigramLanguageModel
 
 MODEL_PARAMS = {
     "batch_size": 32,  # Number of independent sequences.
-    "block_size": 128,  # Max context length.
+    "block_size": 256,  # Max context length.
     "lr": 1e-3,
     "eval_iters": 100,
     "n_embd": 192,

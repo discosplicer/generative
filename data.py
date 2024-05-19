@@ -7,7 +7,7 @@ class ModelData:
     def __init__(self, file, train_split_pct):
         with open(file, "r", encoding="Latin-1") as f:
             self.text = f.read()
-        self.tokenizer = Tokenizer(self.text, num_merges=50)
+        self.tokenizer = Tokenizer(self.text, num_merges=10)
         self.encode = self.tokenizer.encode
         self.decode = self.tokenizer.decode
         self.data = torch.tensor(self.encode(self.text), dtype=torch.long)
