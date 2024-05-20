@@ -16,6 +16,7 @@ class Tokenizer:
         self.vocab = {idx: bytes([idx]) for idx in range(256)}
         for (p0, p1), idx in self.merges.items():
             self.vocab[idx] = self.vocab[p0] + self.vocab[p1]
+            print(self.vocab[idx])
 
     def get_stats(self, ids):
         counts = {}
