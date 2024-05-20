@@ -22,17 +22,19 @@ class BigramModel3D(nn.Module):
                 w_logits = logits[:, :, w, :].view(B * T, C)
                 w_targets = targets[:, :, w].view(B * T)
                 loss += F.cross_entropy(w_logits, w_targets)
+            # Normalize loss for comparison to char-level models.
+            loss /= w
         return logits, loss
 
-    def generate(self, idx, max_new_tokens):
+    def generate(self, idx, max_new_tokens, device=None):
         for _ in range(max_new_tokens):
             logits, loss = self(idx)
             B, T, W, C = logits.shape
-            idx_next = torch.zeros((1, 1, W), dtype=torch.long)
+            idx_next = torch.zeros((1, 1, W), dtype=torch.long, device=device)
             for w in range(W):
                 w_logits = logits[:, -1, w, :]
                 probs = F.softmax(w_logits, dim=-1)
                 w_next = torch.multinomial(probs, num_samples=1)
                 idx_next[0, 0, w] = w_next
-            idx = torch.cat((idx, idx_next), dim=2)
+            idx = torch.cat((idx, idx_next), dim=1)
         return idx
