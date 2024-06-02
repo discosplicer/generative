@@ -88,38 +88,6 @@ class MultiHeadAttention(nn.Module):
         return out
 
 
-class LearnedGeLU(torch.nn.Module):
-    def __init__(self):
-        """
-        In the constructor we instantiate four parameters and assign them as
-        member parameters.
-        """
-        super().__init__()
-        self.x1 = torch.nn.Parameter(torch.randn(()))
-        self.x2 = torch.nn.Parameter(torch.randn(()))
-        # self.x3 = torch.nn.Parameter(torch.randn(()))
-        # self.x4 = torch.nn.Parameter(torch.randn(()))
-        # self.x5 = torch.nn.Parameter(torch.randn(()))
-        # self.x6 = torch.nn.Parameter(torch.randn(()))
-        self.x7 = torch.nn.Parameter(torch.randn(()))
-
-    def forward(self, x):
-        """
-        In the forward function we accept a Tensor of input data and we must return
-        a Tensor of output data. We can use Modules defined in the constructor as
-        well as arbitrary operators on Tensors.
-        """
-        return (
-            self.x1
-            + self.x2 * x
-            # + self.x3 * x**2
-            # + self.x4 * x**3
-            # + self.x5 * torch.exp(x)
-            # + self.x6 * torch.sin(x)
-            + self.x7 * torch.tanh(x)
-        )
-
-
 class FeedForward(nn.Module):
     """Linear layer followed by non-linear transformation."""
 
@@ -128,7 +96,7 @@ class FeedForward(nn.Module):
         # The inner layer of the feed-forward network should be 4x the size of the embeddings, according to AIAYN.
         self.net = nn.Sequential(
             nn.Linear(params["n_embd"], 4 * params["n_embd"]),
-            LearnedGeLU(),
+            nn.GELU(),
             nn.Linear(4 * params["n_embd"], params["n_embd"]),
             nn.Dropout(params["dropout"]),
         )
@@ -160,6 +128,7 @@ class SimpleLinear(nn.Module):
         self.block_size = model_params["block_size"]
         self.batch_size = model_params["batch_size"]
         self.device = model_params["device"]
+        self.gate_tokens = model_params["gate_tokens"]
         # each token directly reads off the logits for the next token from a lookup table
         self.token_embedding_table = nn.Embedding(
             model_params["vocab_size"], model_params["n_embd"]
@@ -167,6 +136,10 @@ class SimpleLinear(nn.Module):
         self.position_embedding_table = nn.Embedding(
             self.block_size, model_params["n_embd"]
         )
+        self.gate_embedding_table = nn.Embedding(
+            self.block_size, model_params["n_embd"]
+        )
+        self.dropout = nn.Dropout(model_params["dropout"])
         self.blocks = nn.Sequential(
             *[TransformerBlock(model_params) for _ in range(model_params["n_layer"])],
             nn.LayerNorm(model_params["n_embd"]),
@@ -195,7 +168,12 @@ class SimpleLinear(nn.Module):
         pos_emb = self.position_embedding_table(
             torch.arange(T, device=self.device)
         )  # (T,C)
-        x = tok_emb + pos_emb  # (B,T,C)
+        gate_emb = self.gate_embedding_table(
+            torch.tensor(
+                torch.isin(idx, torch.tensor(self.gate_tokens, device=self.device))
+            ).cumsum(dim=1)
+        )  # (B, T, C)
+        x = self.dropout(tok_emb + pos_emb + gate_emb)  # (B,T,C)
         x = self.blocks(x)  # (B,T,C)
         x = self.ln_f(x)  # (B,T,C)
         logits = self.lm_head(x)  # (B,T,vocab_size)

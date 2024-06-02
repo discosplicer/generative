@@ -1,17 +1,24 @@
 class Tokenizer:
-    def __init__(self, text, num_merges=40):
+    def __init__(self, text, min_pairs, encoding):
         self.text = text
-        self.tokens = self.text.encode("Latin-1")
+        self.encoding = encoding
+        self.tokens = self.text.encode(encoding)
         self.tokens = list(map(int, self.tokens))
         ids = list(self.tokens)
+        self.gate_tokens = list(map(int, ".?!".encode(encoding)))
+        stats = self.get_stats(ids)
+        occurrences = max(stats.values())
         self.merges = {}
-        for i in range(num_merges):
-            stats = self.get_stats(ids)
+        i = 0
+        while occurrences > min_pairs:
             pair = max(stats, key=stats.get)
             idx = 256 + i
-            print(f"merging {pair} into new token {idx}")
+            print(f"merging {pair} occurring {occurrences} times into new token {idx}")
             ids = self.merge(ids, pair, idx)
             self.merges[pair] = idx
+            stats = self.get_stats(ids)
+            occurrences = max(stats.values())
+            i += 1
 
         self.vocab = {idx: bytes([idx]) for idx in range(256)}
         for (p0, p1), idx in self.merges.items():
@@ -21,7 +28,10 @@ class Tokenizer:
         counts = {}
         # Consecutive elements.
         for pair in zip(ids, ids[1:]):
-            counts[pair] = counts.get(pair, 0) + 1
+            if pair[0] not in [*self.gate_tokens] and pair[1] not in [
+                *self.gate_tokens
+            ]:
+                counts[pair] = counts.get(pair, 0) + 1
         return counts
 
     def merge(self, ids, pair, idx):
@@ -42,11 +52,11 @@ class Tokenizer:
 
     def decode(self, ids):
         tokens = b"".join(self.vocab[idx] for idx in ids)
-        text = tokens.decode("Latin-1")
+        text = tokens.decode(self.encoding, errors="replace")
         return text
 
     def encode(self, text):
-        tokens = list(text.encode("Latin-1"))
+        tokens = list(text.encode(self.encoding))
         while True:
             stats = self.get_stats(tokens)
             pair = min(stats, key=lambda p: self.merges.get(p, float("inf")))

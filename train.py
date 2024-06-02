@@ -2,6 +2,7 @@ import os
 
 import torch
 import pandas as pd
+import numpy as np
 
 from data import ModelData
 from model import Model, SimpleLinear, AttentionHead, BigramLanguageModel
@@ -15,24 +16,29 @@ from model import Model, SimpleLinear, AttentionHead, BigramLanguageModel
 
 MODEL_PARAMS = {
     "batch_size": 32,  # Number of independent sequences.
-    "block_size": 256,  # Max context length.
-    "lr": 1e-3,
+    "block_size": 128,  # Max context length.
+    "lr": 3e-4,
     "eval_iters": 100,
-    "n_embd": 192,
+    "n_embd": 384,
     "num_heads": 6,
     "n_layer": 6,
     "temperature": 0.8,
-    "dropout": 0.2,
+    "dropout": 0.1,
     "device": "cuda" if torch.cuda.is_available() else "cpu",
 }
 model_params = MODEL_PARAMS
 model_params["head_size"] = model_params["n_embd"] // model_params["num_heads"]
-MAX_ITERATIONS = 5000
+MAX_ITERATIONS = 20000
 INFERENCE_TOKENS = 500
+# Coupon collector problem. With larger block sizes, each token needs to appear more
+# often in the training data to give additional context.
+n = model_params["block_size"]
+MIN_PAIRS = n * np.log(n) + 0.5 * n
 
-data = ModelData("nietzsche.txt", train_split_pct=0.9)
-MODEL_PARAMS["vocab_size"] = data.vocab_size
-model = Model(data, SimpleLinear, MODEL_PARAMS)
+data = ModelData("nietzsche.txt", MIN_PAIRS, train_split_pct=0.9)
+model_params["gate_tokens"] = data.tokenizer.gate_tokens
+model_params["vocab_size"] = data.vocab_size
+model = Model(data, SimpleLinear, model_params)
 
 model.train(data, MAX_ITERATIONS, INFERENCE_TOKENS)
 

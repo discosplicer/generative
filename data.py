@@ -4,10 +4,13 @@ from tokenizer import Tokenizer
 
 
 class ModelData:
-    def __init__(self, file, train_split_pct):
-        with open(file, "r", encoding="Latin-1") as f:
+    def __init__(self, file, min_pairs, train_split_pct=0.9):
+        encoding = "UTF-8"
+        with open(file, "r", encoding=encoding) as f:
             self.text = f.read()
-        self.tokenizer = Tokenizer(self.text, num_merges=10)
+        self.tokenizer = Tokenizer(
+            self.text, min_pairs=min_pairs / train_split_pct, encoding=encoding
+        )
         self.encode = self.tokenizer.encode
         self.decode = self.tokenizer.decode
         self.data = torch.tensor(self.encode(self.text), dtype=torch.long)
