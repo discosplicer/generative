@@ -129,6 +129,8 @@ class SimpleLinear(nn.Module):
         self.batch_size = model_params["batch_size"]
         self.device = model_params["device"]
         self.gate_tokens = model_params["gate_tokens"]
+        self.word_token = model_params["word_token"]
+        self.vocab_size = model_params["vocab_size"]
         # each token directly reads off the logits for the next token from a lookup table
         self.token_embedding_table = nn.Embedding(
             model_params["vocab_size"], model_params["n_embd"]
@@ -137,6 +139,9 @@ class SimpleLinear(nn.Module):
             self.block_size, model_params["n_embd"]
         )
         self.gate_embedding_table = nn.Embedding(
+            self.block_size, model_params["n_embd"]
+        )
+        self.word_embedding_table = nn.Embedding(
             self.block_size, model_params["n_embd"]
         )
         self.dropout = nn.Dropout(model_params["dropout"])
@@ -173,7 +178,13 @@ class SimpleLinear(nn.Module):
                 torch.isin(idx, torch.tensor(self.gate_tokens, device=self.device))
             ).cumsum(dim=1)
         )  # (B, T, C)
-        x = self.dropout(tok_emb + pos_emb + gate_emb)  # (B,T,C)
+        word_emb = self.word_embedding_table(
+            torch.tensor(
+                torch.isin(idx, torch.tensor(self.word_token, device=self.device))
+            ).cumsum(dim=1)
+        )  # (B, T, C)
+        x = F.one_hot(idx, num_classes=self.vocab_size)
+        x = self.dropout(x + tok_emb + pos_emb + gate_emb + word_emb)  # (B,T,C)
         x = self.blocks(x)  # (B,T,C)
         x = self.ln_f(x)  # (B,T,C)
         logits = self.lm_head(x)  # (B,T,vocab_size)

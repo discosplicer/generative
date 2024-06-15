@@ -1,24 +1,28 @@
 class Tokenizer:
-    def __init__(self, text, min_pairs, encoding):
+    def __init__(self, text, min_pairs, num_heads, encoding):
         self.text = text
         self.encoding = encoding
         self.tokens = self.text.encode(encoding)
         self.tokens = list(map(int, self.tokens))
         ids = list(self.tokens)
         self.gate_tokens = list(map(int, ".?!".encode(encoding)))
+        self.word_token = list(map(int, " \n".encode(encoding)))
         stats = self.get_stats(ids)
         occurrences = max(stats.values())
         self.merges = {}
+        idx = 256
         i = 0
-        while occurrences > min_pairs:
+        # Go until you have no occurences with min required pairs
+        # and the number of tokens evenly divides number of heads.
+        while occurrences > min_pairs or idx % num_heads != 0:
             pair = max(stats, key=stats.get)
-            idx = 256 + i
             print(f"merging {pair} occurring {occurrences} times into new token {idx}")
             ids = self.merge(ids, pair, idx)
             self.merges[pair] = idx
             stats = self.get_stats(ids)
             occurrences = max(stats.values())
             i += 1
+            idx += 1
 
         self.vocab = {idx: bytes([idx]) for idx in range(256)}
         for (p0, p1), idx in self.merges.items():
@@ -28,8 +32,9 @@ class Tokenizer:
         counts = {}
         # Consecutive elements.
         for pair in zip(ids, ids[1:]):
-            if pair[0] not in [*self.gate_tokens] and pair[1] not in [
-                *self.gate_tokens
+            if pair[0] not in [*self.gate_tokens, *self.word_token] and pair[1] not in [
+                *self.gate_tokens,
+                *self.word_token,
             ]:
                 counts[pair] = counts.get(pair, 0) + 1
         return counts

@@ -4,12 +4,15 @@ from tokenizer import Tokenizer
 
 
 class ModelData:
-    def __init__(self, file, min_pairs, train_split_pct=0.9):
+    def __init__(self, file, min_pairs, num_heads, train_split_pct=0.9):
         encoding = "UTF-8"
         with open(file, "r", encoding=encoding) as f:
             self.text = f.read()
         self.tokenizer = Tokenizer(
-            self.text, min_pairs=min_pairs / train_split_pct, encoding=encoding
+            self.text,
+            min_pairs=min_pairs / train_split_pct,
+            num_heads=num_heads,
+            encoding=encoding,
         )
         self.encode = self.tokenizer.encode
         self.decode = self.tokenizer.decode
